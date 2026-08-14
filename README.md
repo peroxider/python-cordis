@@ -64,21 +64,21 @@ pytest
 
 ```mermaid
 flowchart TD
-    subgraph Core["内核 python-cordis（无关具体业务）"]
-        Hooks["HookRegistry<br/>pluggy 四种调用模式"]
-        Ctx["Context 服务容器<br/>__getattr__ 反射 / 作用域链 / use 代理"]
-        Fiber["Fiber 生命周期<br/>start/stop + refresh 反应式状态机"]
-        Loader["Loader 声明式加载器<br/>reconcile + hot_reload"]
-        Config["配置装配<br/>OmegaConf overlay / dump / 插值"]
+    subgraph Core["内核 python-cordis"]
+        Hooks["HookRegistry\npluggy 四种调用模式"]
+        Ctx["Context 服务容器\n__getattr__ 反射 / 作用域链 / use 代理"]
+        Fiber["Fiber 生命周期\nstart / stop / refresh 反应式状态机"]
+        Loader["Loader 声明式加载器\nreconcile / hot_reload"]
+        Config["配置装配\nOmegaConf overlay / dump / 插值"]
     end
 
-    subgraph Enhance["可选增强（kernel 内）"]
-        HMR["HMR 热重载<br/>Reloader / PluginReloader / FileWatcher"]
-        Obs["LifecycleLogger<br/>结构化日志（observability）"]
+    subgraph Enhance["可选增强"]
+        HMR["HMR 热重载\nReloader / PluginReloader / FileWatcher"]
+        Obs["LifecycleLogger\n结构化日志 (observability)"]
     end
 
-    subgraph App["应用层 python-cordis-agent（独立包）"]
-        Biz["业务插件：注册服务、挂载 hook<br/>组装出具体产品能力"]
+    subgraph App["应用层 python-cordis-agent"]
+        Biz["业务插件\n注册服务、挂载 hook、组装出产品能力"]
     end
 
     Fiber --> Ctx
@@ -86,8 +86,8 @@ flowchart TD
     Hooks --> Ctx
     Fiber --> HMR
     Fiber --> Obs
-    App -- "依赖内核扩展点" --> Hooks
-    App -- "注册服务" --> Ctx
+    App -->|依赖内核扩展点| Hooks
+    App -->|注册服务| Ctx
 ```
 
 Key ideas:
