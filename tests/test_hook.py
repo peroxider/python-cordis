@@ -184,26 +184,3 @@ def test_waterfall_tail_is_reached_when_all_delegate():
 def test_waterfall_no_listeners_returns_initial():
     reg = new_registry()
     assert reg.waterfall("on_waterfall", _initial="start") == "start"
-
-
-# ---- F1.1b / F11.2 entry points 自动发现（依赖 `pip install -e .`）----
-
-def test_entry_points_discovery_is_live_and_reversible():
-    from python_cordis import ToolRegistry
-    from python_cordis.seams import pipeline
-
-    reg = HookRegistry()
-    reg.add_spec(pipeline)
-    count = reg.load_entry_points("python_cordis.plugins")
-    demo = [p for p in reg.plugins() if getattr(p, "name", None) == "demo-plugin"]
-    if not demo:
-        pytest.skip("demo-plugin entry point not installed; run `pip install -e .`")
-    assert count >= 1
-    assert reg.plugins()  # 加载的插件被本 API 跟踪
-
-    tools = ToolRegistry(reg)
-    tools.register("read_file", lambda path: {"content": "abc"})
-    assert tools.run("read_file", path="x.txt")["result"]["demo"] == "seen"  # 自动发现的 hookimpl 生效
-
-    reg.unregister(demo[0])  # 可逆：卸载后观察消失
-    assert tools.run("read_file", path="x.txt")["result"].get("demo") is None

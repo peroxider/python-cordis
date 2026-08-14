@@ -24,20 +24,12 @@ dev = [
 hmr = [
     "watchdog>=3",
 ]
-web = [
-    "websockets>=12",
-]
-
-[project.entry-points."python_cordis.plugins"]
-demo-plugin = "python_cordis.contrib.demo_plugin:plugin"
-web-server = "python_cordis.contrib.web_server:plugin"
-approval = "python_cordis.contrib.approval:plugin"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-"python_cordis.contrib.web_frontend" = ["static/*"]
+"python_cordis" = ["py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

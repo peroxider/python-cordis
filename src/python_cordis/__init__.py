@@ -1,69 +1,38 @@
 """python-cordis: a plugin-driven framework kernel for Python.
 
-Everything is a plugin. This package provides the engine that makes an
-application composable from plugins: hooks (on pluggy), a reflective
-service container, plugin lifecycle, and config assembly.
+Everything is a plugin. This package provides the pure engine that makes an
+application composable from plugins: hooks (on pluggy), a reflective service
+container, plugin lifecycle, config assembly, and hot-reload.
+
+It is a *meta-framework*: it knows nothing about agents, LLMs, filesystems,
+persistence, or transports. Concrete business modules (agent loop, LLM seam,
+session logs, persistence backends, web transport) live in the companion
+``python-cordis-agent`` package and are plain, replaceable plugins on top of
+this kernel.
 """
 
+from .core.config import dump, load, overlay, resolve
 from .core.context import Context, inject
 from .core.fiber import Fiber
-from .core.hook import HookRegistry, hookimpl, hookspec
-from .core.config import dump, load, overlay, resolve
 from .core.hmr import FileWatcher, PluginReloader, Reloader
-from .observability import LifecycleLogger, setup_lifecycle_logging
-from .seams.fs import FileSystem, LocalFS, SandboxFS
-from .seams.llm import (
-    KIND_TOOL_CALL,
-    LlmAdapter,
-    LlmEvent,
-    LlmStream,
-    MockProvider,
-)
-from .seams.pipeline import REJECT, ToolRegistry
-from .session import (
-    SURFACE_ASSISTANT_MESSAGE,
-    SURFACE_TOOL_RESULT,
-    SURFACE_USER_MESSAGE,
-    Session,
-    SessionEvent,
-    SessionNotFound,
-    SessionStore,
-)
-from .persistence import (
-    JsonlSessionPersistence,
-    PersistenceCoordinator,
-    SessionPersistence,
-    SqliteSessionPersistence,
-)
-from .agent import NEXT_STEP, NEXT_TURN, Agent, Inbox
-from .query import InMemoryQueryEngine, SearchHit, SessionQueryEngine
-from .contrib.approval import APPROVE_METHOD, ApprovalPlugin
-from .contrib.web_server import (
-    ClientRequest,
-    ClientResponse,
-    EventBus,
-    MethodKind,
-    RpcErrorCode,
-    RpcMessage,
-    RpcRegistry,
-    RpcResult,
-    ServerRequest,
-    ServerResponse,
-    WebServerPlugin,
-    decode_message,
-    encode_message,
-    plugin as web_server_plugin,
+from .core.hook import HookRegistry, hookimpl, hookspec
+from .observability import (
+    LOGGER_NAME,
+    LifecycleLogger,
+    fiber_started,
+    fiber_stopped,
+    setup_lifecycle_logging,
 )
 
 __version__ = "0.1.0"
 
 __all__ = [
     "Context",
+    "inject",
     "Fiber",
     "HookRegistry",
     "hookimpl",
     "hookspec",
-    "inject",
     "dump",
     "load",
     "overlay",
@@ -71,37 +40,10 @@ __all__ = [
     "Reloader",
     "PluginReloader",
     "FileWatcher",
+    "fiber_started",
+    "fiber_stopped",
     "LifecycleLogger",
     "setup_lifecycle_logging",
-    "FileSystem",
-    "LocalFS",
-    "SandboxFS",
-    "LlmAdapter",
-    "LlmEvent",
-    "LlmStream",
-    "MockProvider",
-    "KIND_TOOL_CALL",
-    "ToolRegistry",
-    "REJECT",
-    "Session",
-    "SessionEvent",
-    "SessionStore",
-    "SessionNotFound",
-    "SURFACE_USER_MESSAGE",
-    "SURFACE_ASSISTANT_MESSAGE",
-    "SURFACE_TOOL_RESULT",
-    "SessionPersistence",
-    "JsonlSessionPersistence",
-    "SqliteSessionPersistence",
-    "PersistenceCoordinator",
-    "Agent",
-    "Inbox",
-    "NEXT_STEP",
-    "NEXT_TURN",
-    "SessionQueryEngine",
-    "InMemoryQueryEngine",
-    "SearchHit",
-    "ApprovalPlugin",
-    "APPROVE_METHOD",
+    "LOGGER_NAME",
     "__version__",
 ]
