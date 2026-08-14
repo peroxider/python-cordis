@@ -64,6 +64,109 @@ def test_register_disposer_runs_at_fiber_stop():
     assert order == ["effect"]
 
 
+# ---- 论文 §3.2 / §3.3 反应式余效应 + 组件纤维：refresh 目标状态收敛 ----
+
+
+class _ReactiveComponent:
+    name = "reactive"
+    inject = ("db",)
+
+    def __init__(self, events: list[str]) -> None:
+        self.events = events
+
+    def apply(self, ctx, config):
+        self.events.append("apply")
+        ctx.register("svc", object())
+
+
+def test_refresh_activates_when_dependencies_satisfied():
+    ctx = Context()
+    ctx.register("db", object())
+    events: list[str] = []
+    fiber = Fiber(ctx, component=_ReactiveComponent(events))
+    fiber.refresh()
+    assert fiber.active
+    assert events == ["apply"]  # apply 恰好一次
+
+
+def test_refresh_deactivates_when_dependency_disappears():
+    ctx = Context()
+    ctx.register("db", object())
+    events: list[str] = []
+    fiber = Fiber(ctx, component=_ReactiveComponent(events))
+    fiber.refresh()
+    assert fiber.active
+
+    ctx._services.pop("db")
+    fiber.refresh()  # 手动 fiber 不订阅宿主通知，显式收敛
+    assert not fiber.active
+    with pytest.raises(AttributeError):
+        _ = fiber.ctx.svc  # 副作用已撤销
+
+
+def test_refresh_reactivates_when_dependency_returns():
+    ctx = Context()
+    events: list[str] = []
+    fiber = Fiber(ctx, component=_ReactiveComponent(events))
+    fiber.refresh()
+    assert not fiber.active
+
+    ctx.register("db", object())
+    fiber.refresh()  # 依赖出现 -> 显式收敛 -> 激活
+    assert fiber.active
+    assert events == ["apply"]
+
+
+def test_refresh_is_reentrant_and_converges_to_quiescence():
+    """重入通知折叠进下一轮循环，最终收敛到静止（论文惯性状态机同步版）。"""
+    ctx = Context()
+    events: list[str] = []
+
+    class ChainComponent:
+        name = "chain"
+        inject = ("db",)
+
+        def apply(self, ctx, config):
+            events.append("apply")
+            ctx.register("extra", object())  # 激活期间又产生依赖变化
+
+    ctx.register("db", object())
+    fiber = Fiber(ctx, component=ChainComponent())
+    fiber.refresh()
+    assert fiber.active
+    assert fiber.ctx.extra is not None
+
+
+def test_epoch_bumps_on_each_refresh_pass():
+    ctx = Context()
+    ctx.register("db", object())
+    fiber = Fiber(ctx, component=_ReactiveComponent([]))
+    e0 = fiber.epoch
+    fiber.refresh()
+    assert fiber.epoch > e0  # 每次收敛推进 epoch
+
+
+def test_disposed_fiber_ignores_refresh():
+    ctx = Context()
+    ctx.register("db", object())
+    fiber = Fiber(ctx, component=_ReactiveComponent([])).start()
+    fiber.dispose()
+    assert fiber.disposed
+    fiber.refresh()  # 已 dispose -> 忽略，不抛错
+    assert not fiber.active
+
+
+def test_manual_start_activates_even_without_dependencies():
+    """手动 start 是显式激活：不要求依赖满足（与 refresh 的目标状态区分）。"""
+    ctx = Context()
+    events: list[str] = []
+    fiber = Fiber(ctx, component=_ReactiveComponent(events)).start()
+    assert fiber.active
+    assert events == ["apply"]
+    fiber.stop()
+    assert not fiber.active
+
+
 import pytest  # noqa: E402  (after other imports for readability)
 
 
