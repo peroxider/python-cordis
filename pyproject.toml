@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-cordis"
+version = "0.1.0"
+description = "A plugin-driven framework kernel for Python, inspired by the cordis framework (everything is a plugin)."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+dependencies = [
+    "pluggy>=1.0",
+    "omegaconf>=2.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7",
+    "pytest-cov>=4",
+    "mypy>=1.10",
+    "build>=1.0",
+]
+hmr = [
+    "watchdog>=3",
+]
+web = [
+    "websockets>=12",
+]
+
+[project.entry-points."python_cordis.plugins"]
+demo-plugin = "python_cordis.contrib.demo_plugin:plugin"
+web-server = "python_cordis.contrib.web_server:plugin"
+approval = "python_cordis.contrib.approval:plugin"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"python_cordis.contrib.web_frontend" = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+files = ["src/python_cordis"]
