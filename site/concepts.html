@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Core Concepts · python-cordis</title>
+  <meta name="description" content="Revertible effects, reactive coeffects, Context, Fiber, and four hook modes — the five building blocks of the cordis kernel." />
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="assets/i18n.js" defer></script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">c</span>
+      <span>python-cordis</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html"        data-i18n="nav.home"></a>
+      <a href="quickstart.html"   data-i18n="nav.start"></a>
+      <a href="concepts.html"     data-i18n="nav.concepts"></a>
+      <a href="architecture.html" data-i18n="nav.arch"></a>
+      <a href="dev.html"          data-i18n="nav.dev"></a>
+    </div>
+    <div class="nav-actions">
+      <button class="lang-toggle" data-lang-toggle></button>
+      <a class="nav-cta" href="https://github.com/peroxider/python-cordis" data-i18n="nav.cta"></a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" style="padding:64px 0 48px">
+  <div class="wrap">
+    <div class="hero-eyebrow" data-i18n="nav.concepts"></div>
+    <h1 style="font-size:clamp(28px,4vw,44px)" data-i18n="conc.h1">Five building blocks, one composable kernel.</h1>
+    <p class="hero-tag" style="margin:0 auto" data-i18n-html="conc.tag">
+      围绕论文 <em>A Programming Paradigm for Spatiotemporal Composability</em> 的两大原语
+      —— <strong style="color:var(--accent)">可逆效应</strong> 与 <strong style="color:var(--accent)">反应式余效应</strong> —— 落地为五个核心抽象。
+    </p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left">
+      <div class="kicker" data-i18n="conc.rv.kicker">§3.1</div>
+      <h2 data-i18n="conc.rv.h2">Revertible Effects · 可逆效应</h2>
+      <p data-i18n="conc.rv.desc">每一次对 context 的修改都返回一个幂等 disposer,拆卸时按相反顺序执行反向操作。卸载组件 = 完整撤销它的全部副作用。</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>API</th><th data-i18n="conc.rv.th.meaning">含义</th><th data-i18n="conc.rv.th.returns">返回</th></tr>
+      </thead>
+      <tbody>
+        <tr><td data-i18n="conc.rv.t1.api"><code>ctx.register(name, value)</code></td><td data-i18n="conc.rv.t1.desc">绑定一个具名服务</td><td data-i18n-html="conc.rv.t1.ret"><code class="inline">dispose</code></td></tr>
+        <tr><td data-i18n="conc.rv.t2.api"><code>ctx.set(name, value)</code></td><td data-i18n="conc.rv.t2.desc">同 register,并通知依赖它的 fiber</td><td data-i18n-html="conc.rv.t2.ret"><code class="inline">dispose</code></td></tr>
+        <tr><td data-i18n="conc.rv.t3.api"><code>ctx.effect(fn)</code></td><td data-i18n="conc.rv.t3.desc">记录一段拆卸操作</td><td data-i18n-html="conc.rv.t3.ret"><code class="inline">dispose</code></td></tr>
+        <tr><td data-i18n="conc.rv.t4.api"><code>ctx.on(hooks, name, fn)</code></td><td data-i18n="conc.rv.t4.desc">注册一个 hookimpl 监听</td><td data-i18n-html="conc.rv.t4.ret"><code class="inline">dispose</code></td></tr>
+      </tbody>
+    </table>
+
+<pre class="code"><span class="tk-com"># paper Algorithm 1 — armed guard</span>
+<span class="tk-kw">class</span> <span class="tk-cls">_Effect</span>:
+    <span class="tk-kw">def</span> <span class="tk-fn">__init__</span>(self, fn): self.fn, self.armed = fn, <span class="tk-kw">True</span>
+
+dispose = ctx.<span class="tk-fn">effect</span>(fn)
+<span class="tk-com" data-i18n="code.crv.c1"># 调用一次后 armed = False,再次调用是 no-op</span>
+dispose()   <span class="tk-com" data-i18n="code.crv.c2"># 拆</span>
+dispose()   <span class="tk-com" data-i18n="code.crv.c3"># 安全 — 幂等</span></pre>
+
+    <p style="color:var(--text-muted)" data-i18n-html="conc.rv.tail">这就是为什么 <code class="inline">fiber.stop()</code> 可以反复调用,也可以在异常路径上安全调用 —— 不会有"二次拆卸"导致的脏状态。</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left">
+      <div class="kicker" data-i18n="conc.co.kicker">§3.2</div>
+      <h2 data-i18n="conc.co.h2">Reactive Coeffects · 反应式余效应</h2>
+      <p data-i18n-html="conc.co.desc">组件在 <code class="inline">inject</code> 里声明它"需要什么",Fiber 会根据依赖的实际可用性自动 reconcile。</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th data-i18n="conc.co.th.state">状态</th><th data-i18n-html="conc.co.th.cond">触发条件</th><th data-i18n="conc.co.th.side">副作用</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="pill ok" data-i18n="conc.co.t1.state">ACTIVE</span></td><td data-i18n-html="conc.co.t1.cond"><code>inject</code> 全部满足</td><td data-i18n-html="conc.co.t1.side"><code>apply()</code> 跑过,副作用已注册</td></tr>
+        <tr><td><span class="pill warn" data-i18n="conc.co.t2.state">INACTIVE</span></td><td data-i18n-html="conc.co.t2.cond"><code>inject</code> 缺失</td><td data-i18n="conc.co.t2.side">未激活,或已拆卸</td></tr>
+        <tr><td><span class="pill" data-i18n="conc.co.t3.state">APPLYING</span></td><td data-i18n-html="conc.co.t3.cond">正在跑 <code>apply</code></td><td data-i18n="conc.co.t3.side">锁,防重入</td></tr>
+      </tbody>
+    </table>
+
+    <p data-i18n="conc.co.kw">关键不变式:</p>
+    <ul style="color:var(--text-muted); line-height:1.9">
+      <li data-i18n-html="conc.co.li1"><strong style="color:var(--text)">单向:</strong> 注册 / 注销服务时,所有声明过该依赖的 fiber 都会被通知。</li>
+      <li data-i18n-html="conc.co.li2"><strong style="color:var(--text)">惰性:</strong> 依赖满足时立即激活;依赖消失时立即拆卸 — 不需要手写 watcher。</li>
+      <li data-i18n-html="conc.co.li3"><strong style="color:var(--text)">epoch:</strong> 每个 <code>refresh()</code> 轮次自增 <code>epoch</code>;陈旧通知被丢弃。</li>
+      <li data-i18n-html="conc.co.li4"><strong style="color:var(--text)">惯性:</strong> re-entrant 通知折叠到下一轮,避免栈溢出。</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left">
+      <div class="kicker" data-i18n="conc.ctx.kicker">§3.4</div>
+      <h2 data-i18n="conc.ctx.h2">Context · 反射式服务容器</h2>
+      <p data-i18n-html="conc.ctx.desc">Context 既是服务仓库,也是效应边界。它实现论文的 <em>context paradigm</em>:每次变更被记录、可撤销,每次依赖变更被广播给声明它的 fiber。</p>
+    </div>
+
+<pre class="code"><span class="tk-com" data-i18n="conc.ctx.cap1"># 反射式查找 + 父链</span>
+ctx.<span class="tk-fn">register</span>(<span class="tk-str">"fs"</span>, FileSystemBackend())    <span class="tk-com" data-i18n="conc.ctx.l1"># 在 root 注册</span>
+
+child = ctx.<span class="tk-fn">extend</span>()                              <span class="tk-com" data-i18n="conc.ctx.l2"># scope 子 context</span>
+child.fs                                          <span class="tk-com" data-i18n="conc.ctx.l3"># 沿父链找到 root.fs</span>
+
+isolated = ctx.<span class="tk-fn">isolate</span>()                       <span class="tk-com" data-i18n="conc.ctx.l4"># 论文的隔离 realm</span>
+isolated.<span class="tk-fn">register</span>(<span class="tk-str">"fs"</span>, MemBackend())     <span class="tk-com" data-i18n="conc.ctx.l5"># shadow 父级同名服务</span></pre>
+
+    <p style="color:var(--text-muted)" data-i18n-html="conc.ctx.tail">
+      <code class="inline">ctx.use(component)</code> 会创建一个 child context,并把访问权限限制在组件的
+      <code class="inline">inject</code> 声明之内 —— 这就是论文的 <em>proxy-mediated enforcement</em>:
+      未声明的访问抛 <code class="inline">ServiceNotFound</code>。
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left">
+      <div class="kicker" data-i18n="conc.fb.kicker">§3.3</div>
+      <h2 data-i18n="conc.fb.h2">Fiber · 组件运行时实例</h2>
+      <p data-i18n-html="conc.fb.desc">Fiber 是 component 的运行时包装:它把一个组件 spec(<code>inject</code> + <code>apply</code>) 绑定到一个 context,并拥有自己的生命周期。</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th data-i18n="conc.fb.th.api">方法</th><th data-i18n="conc.fb.th.sem">语义</th></tr>
+      </thead>
+      <tbody>
+        <tr><td data-i18n="conc.fb.t1.api"><code>fiber.start()</code></td><td data-i18n="conc.fb.t1.desc">手动激活(若依赖不满足则抛错)</td></tr>
+        <tr><td data-i18n="conc.fb.t2.api"><code>fiber.stop()</code></td><td data-i18n="conc.fb.t2.desc">手动拆卸,逆序执行所有 disposer</td></tr>
+        <tr><td data-i18n="conc.fb.t3.api"><code>fiber.refresh()</code></td><td data-i18n="conc.fb.t3.desc">反应式 reconcile,依赖变更自动触发</td></tr>
+        <tr><td data-i18n="conc.fb.t4.api"><code>fiber.dispose()</code></td><td data-i18n="conc.fb.t4.desc">永久卸载,无法再激活</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left">
+      <div class="kicker" data-i18n="conc.hook.kicker">core/hook.py</div>
+      <h2 data-i18n="conc.hook.h2">Four hook modes · 四种调用模式</h2>
+      <p data-i18n-html="conc.hook.desc"><code class="inline">HookRegistry</code> 在 pluggy 之上加了四种调用模式,覆盖大多数插件协作场景。</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th data-i18n="conc.hook.th.mode">模式</th><th data-i18n="conc.hook.th.beh">行为</th><th data-i18n="conc.hook.th.use">典型用途</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-i18n="conc.hook.t1.mode"><code>emit(name, **kw)</code></td>
+          <td data-i18n="conc.hook.t1.beh">每个监听者都被调用,所有结果返回</td>
+          <td data-i18n="conc.hook.t1.use">事件广播、metrics 收集</td>
+        </tr>
+        <tr>
+          <td data-i18n="conc.hook.t2.mode"><code>parallel(name, **kw)</code></td>
+          <td data-i18n="conc.hook.t2.beh">线程池并发调用所有监听者</td>
+          <td data-i18n="conc.hook.t2.use">并行副作用、fan-out</td>
+        </tr>
+        <tr>
+          <td data-i18n="conc.hook.t3.mode"><code>bail(name, **kw)</code></td>
+          <td data-i18n-html="conc.hook.t3.beh">首个非 None 返回短路(<code>firstresult=True</code>)</td>
+          <td data-i18n="conc.hook.t3.use">provider 链、解析器</td>
+        </tr>
+        <tr>
+          <td data-i18n="conc.hook.t4.mode"><code>waterfall(name, **kw)</code></td>
+          <td data-i18n-html="conc.hook.t4.beh">链式委托,每层可选调用 <code>next</code></td>
+          <td data-i18n="conc.hook.t4.use">中间件管道、命令链</td>
+        </tr>
+      </tbody>
+    </table>
+
+<pre class="code"><span class="tk-cls">@hookspec</span>(firstresult=<span class="tk-kw">True</span>)
+<span class="tk-kw">def</span> <span class="tk-fn">resolve_config</span>(key): ...       <span class="tk-com" data-i18n="conc.hook.cap1"># → 用 bail 模式</span>
+
+<span class="tk-cls">@hookspec</span>
+<span class="tk-kw">def</span> <span class="tk-fn">middleware</span>(req, next): ...    <span class="tk-com" data-i18n="conc.hook.cap2"># → 用 waterfall 模式</span></pre>
+
+    <div style="text-align:center; margin-top:32px">
+      <a class="btn btn-primary" href="architecture.html" data-i18n="conc.cta.arch">→ Architecture</a>
+      <a class="btn btn-ghost"   href="dev.html"          data-i18n="conc.cta.dev">→ Development</a>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="links">
+      <a href="https://pypi.org/project/python-cordis/">PyPI</a>
+      <a href="https://github.com/peroxider/python-cordis">GitHub</a>
+      <a href="index.html" data-i18n="nav.home"></a>
+    </div>
+    <div data-i18n="foot.tag"></div>
+  </div>
+</footer>
+
+<script src="assets/main.js" defer></script>
+</body>
+</html>

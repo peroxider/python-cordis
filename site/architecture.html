@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Architecture · python-cordis</title>
+  <meta name="description" content="Six modules (F1–F6), three layers, one kernel. The architecture of python-cordis." />
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="assets/i18n.js" defer></script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">c</span>
+      <span>python-cordis</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html"        data-i18n="nav.home"></a>
+      <a href="quickstart.html"   data-i18n="nav.start"></a>
+      <a href="concepts.html"     data-i18n="nav.concepts"></a>
+      <a href="architecture.html" data-i18n="nav.arch"></a>
+      <a href="dev.html"          data-i18n="nav.dev"></a>
+    </div>
+    <div class="nav-actions">
+      <button class="lang-toggle" data-lang-toggle></button>
+      <a class="nav-cta" href="https://github.com/peroxider/python-cordis" data-i18n="nav.cta"></a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" style="padding:64px 0 48px">
+  <div class="wrap">
+    <div class="hero-eyebrow" data-i18n="nav.arch"></div>
+    <h1 style="font-size:clamp(28px,4vw,44px)" data-i18n="arch.h1">Six modules. Three layers. One kernel.</h1>
+    <p class="hero-tag" style="margin:0 auto" data-i18n="arch.tag">
+      内核只提供 6 个模块、3 个抽象层。具体的 agent 循环、LLM seam、会话日志、持久化、Web 传输
+      —— 都是上一层"应用层"的普通可替换插件,内核对它们一无所知。
+    </p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left">
+      <div class="kicker" data-i18n="arch.f6.kicker">The 6 modules</div>
+      <h2 data-i18n="arch.f6.h2">F1 — F6 · 六个核心模块</h2>
+      <p data-i18n="arch.f6.desc">每个模块只做一件事,组合起来就是完整的插件化运行时。</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>#</th><th data-i18n="arch.f6.th.mod">模块</th><th data-i18n="arch.f6.th.dut">职责</th></tr>
+      </thead>
+      <tbody>
+        <tr><td data-i18n="arch.f6.t1.num"><code>F1</code></td><td data-i18n="arch.f6.t1.mod"><code>core/hook.py</code> · <code>HookRegistry</code></td><td data-i18n="arch.f6.t1.dut">pluggy 之上的四种 hook 调用模式</td></tr>
+        <tr><td data-i18n="arch.f6.t2.num"><code>F2</code></td><td data-i18n="arch.f6.t2.mod"><code>core/context.py</code> · <code>Context</code></td><td data-i18n="arch.f6.t2.dut">反射式服务容器,scope chain,可逆效应</td></tr>
+        <tr><td data-i18n="arch.f6.t3.num"><code>F3</code></td><td data-i18n="arch.f6.t3.mod"><code>core/fiber.py</code> · <code>Fiber</code></td><td data-i18n="arch.f6.t3.dut">组件运行时实例,生命周期 + 反应式 reconcile</td></tr>
+        <tr><td data-i18n="arch.f6.t4.num"><code>F4</code></td><td data-i18n="arch.f6.t4.mod"><code>core/config.py</code></td><td data-i18n="arch.f6.t4.dut">OmegaConf 加载/覆盖/插值,无代码执行</td></tr>
+        <tr><td data-i18n="arch.f6.t5.num"><code>F5</code></td><td data-i18n="arch.f6.t5.mod"><code>core/loader.py</code> · <code>Loader</code></td><td data-i18n-html="arch.f6.t5.dut">声明式组件加载,<code>reconcile</code> + <code>hot_reload</code></td></tr>
+        <tr><td data-i18n="arch.f6.t6.num"><code>F6</code></td><td data-i18n="arch.f6.t6.mod"><code>core/hmr.py</code> · <code>Reloader</code></td><td data-i18n="arch.f6.t6.dut">事务化热重载,失败回滚</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left">
+      <div class="kicker" data-i18n="arch.layer.kicker">Layered architecture</div>
+      <h2 data-i18n="arch.layer.h2">三层:内核 ↔ 扩展插件 ↔ 应用</h2>
+      <p data-i18n="arch.layer.desc">箭头方向是依赖关系:上层依赖下层,下层不知道上层的存在。绿色边框 = 内核模块;橙色 = 应用层插件。</p>
+    </div>
+
+    <div class="layers">
+      <div class="layer app">
+        <div class="layer-tag" data-i18n="arch.layer.l3.tag">Layer 3 · Application</div>
+        <h4 data-i18n-html="arch.layer.l3.h4">你的业务 <code class="inline">main.py</code></h4>
+        <p data-i18n-html="arch.layer.l3.desc">把若干 entry 列表丢给 <code class="inline">Loader.reconcile</code>,业务就跑起来了。换业务不需要改内核。</p>
+      </div>
+      <div class="layer agent">
+        <div class="layer-tag" data-i18n="arch.layer.l2.tag">Layer 2 · Companion plugins</div>
+        <h4 data-i18n-html="arch.layer.l2.h4"><code>python-cordis-agent</code> · LLM / web / persistence · …</h4>
+        <p data-i18n="arch.layer.l2.desc">应用层的"现成插件集":agent 循环、LLM seam、会话日志、持久化后端、Web 传输,均为可替换插件。</p>
+      </div>
+      <div class="layer kern">
+        <div class="layer-tag" data-i18n="arch.layer.l1.tag">Layer 1 · Kernel</div>
+        <h4 data-i18n-html="arch.layer.l1.h4"><code>python-cordis</code> · HookRegistry / Context / Fiber / Loader / HMR</h4>
+        <p data-i18n="arch.layer.l1.desc">6 个模块,约 1500 行 Python。零业务预设,只提供"让插件可组合"的最低限度机制。</p>
+      </div>
+    </div>
+
+<pre class="code"><span class="tk-com" data-i18n="code.arch.c1"># 一次最简单的"启动应用"</span>
+ctx     = <span class="tk-cls">Context</span>()
+hooks   = <span class="tk-cls">HookRegistry</span>()
+loader  = <span class="tk-cls">Loader</span>(ctx, hooks)
+
+entries = [
+    {<span class="tk-str">"module"</span>: <span class="tk-str">"myapp.printer"</span>,  <span class="tk-str">"config"</span>: {<span class="tk-str">"prefix"</span>: <span class="tk-str">"&gt;"</span>}},
+    {<span class="tk-str">"module"</span>: <span class="tk-str">"myapp.logger"</span>,  <span class="tk-str">"config"</span>: {<span class="tk-str">"sink"</span>: <span class="tk-str">"stdout"</span>}},
+]
+
+loader.<span class="tk-fn">reconcile</span>(entries)            <span class="tk-com" data-i18n="code.arch.c2"># 增量 reconcile</span>
+loader.<span class="tk-fn">hot_reload</span>(<span class="tk-str">"myapp.printer"</span>)  <span class="tk-com" data-i18n="code.arch.c3"># 改文件 → 自动重载,失败回滚</span></pre>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left">
+      <div class="kicker" data-i18n="arch.pe.kicker">Plugin discovery</div>
+      <h2 data-i18n="arch.pe.h2">插件入口点约定</h2>
+      <p data-i18n-html="arch.pe.desc">python-cordis 自己不声明任何入口点插件;应用通过标准 <code class="inline">python_cordis.plugins</code> group 注册自己的插件。</p>
+    </div>
+
+<pre class="code"><span class="tk-com" data-i18n="arch.pe.cap1"># your-plugin/pyproject.toml</span>
+[project.entry-points.<span class="tk-str">python_cordis.plugins</span>]
+my_plugin = <span class="tk-str">"my_pkg.plugins:MyPlugin"</span></pre>
+
+<pre class="code"><span class="tk-com" data-i18n="arch.pe.cap2"># your app</span>
+hooks = <span class="tk-cls">HookRegistry</span>()
+hooks.<span class="tk-fn">load_entry_points</span>()             <span class="tk-com" data-i18n="arch.pe.app"># 自动发现所有注册的插件</span></pre>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="banner">
+      <div class="banner-icon">a</div>
+      <div class="banner-body">
+        <h3 data-i18n="comp.banner.h"></h3>
+        <p  data-i18n="comp.banner.p"></p>
+      </div>
+      <a class="btn btn-ghost" href="https://pypi.org/project/python-cordis-agent/"
+         data-i18n="comp.banner.a"></a>
+    </div>
+
+    <div style="text-align:center; margin-top:24px">
+      <a class="btn btn-primary" href="dev.html" data-i18n="arch.cta.dev">→ Development</a>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="links">
+      <a href="https://pypi.org/project/python-cordis/">PyPI</a>
+      <a href="https://github.com/peroxider/python-cordis">GitHub</a>
+      <a href="index.html" data-i18n="nav.home"></a>
+    </div>
+    <div data-i18n="foot.tag"></div>
+  </div>
+</footer>
+
+<script src="assets/main.js" defer></script>
+</body>
+</html>

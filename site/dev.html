@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Development · python-cordis</title>
+  <meta name="description" content="Set up the dev environment, run tests, type-check, build wheels, and write your own plugin." />
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="assets/i18n.js" defer></script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">c</span>
+      <span>python-cordis</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html"        data-i18n="nav.home"></a>
+      <a href="quickstart.html"   data-i18n="nav.start"></a>
+      <a href="concepts.html"     data-i18n="nav.concepts"></a>
+      <a href="architecture.html" data-i18n="nav.arch"></a>
+      <a href="dev.html"          data-i18n="nav.dev"></a>
+    </div>
+    <div class="nav-actions">
+      <button class="lang-toggle" data-lang-toggle></button>
+      <a class="nav-cta" href="https://github.com/peroxider/python-cordis" data-i18n="nav.cta"></a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" style="padding:64px 0 48px">
+  <div class="wrap">
+    <div class="hero-eyebrow" data-i18n="nav.dev"></div>
+    <h1 style="font-size:clamp(28px,4vw,44px)" data-i18n="devs.h1">Contribute, test, ship.</h1>
+    <p class="hero-tag" style="margin:0 auto" data-i18n="devs.tag">
+      python-cordis 是 MIT 开源、strict mypy、单测覆盖六大模块。下面是从拉源码到发版的完整链路。
+    </p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left">
+      <div class="kicker" data-i18n="devs.setup.kicker">1 · Setup</div>
+      <h2 data-i18n="devs.setup.h2">本地开发环境</h2>
+      <p data-i18n="devs.setup.desc">克隆后可编辑模式安装,自带 dev / hmr 额外依赖。</p>
+    </div>
+
+<pre class="code">git <span class="tk-fn">clone</span> https://github.com/peroxider/python-cordis
+<span class="tk-kw">cd</span> python-cordis
+
+pip install <span class="tk-str">-e ".[dev,hmr]"</span></pre>
+
+    <p style="color:var(--text-muted)" data-i18n-html="devs.setup.tip"><code class="inline">dev</code> extra 提供 <code class="inline">pytest</code> / <code class="inline">pytest-cov</code> / <code class="inline">mypy</code> / <code class="inline">build</code>;<code class="inline">hmr</code> extra 提供 <code class="inline">watchdog</code>(可选)。</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left">
+      <div class="kicker" data-i18n="devs.verify.kicker">2 · Verify</div>
+      <h2 data-i18n="devs.verify.h2">测试、类型检查、打包</h2>
+      <p data-i18n="devs.verify.desc">三件事一行命令;CI 也跑同一组。</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th data-i18n="devs.verify.th.cmd">命令</th><th data-i18n="devs.verify.th.eff">作用</th></tr>
+      </thead>
+      <tbody>
+        <tr><td data-i18n="devs.verify.t1.cmd"><code>python -m mypy</code></td><td data-i18n-html="devs.verify.t1.desc">strict 模式类型检查(<code class="inline">pyproject.toml [tool.mypy]</code>)</td></tr>
+        <tr><td data-i18n="devs.verify.t2.cmd"><code>python -m pytest</code></td><td data-i18n-html="devs.verify.t2.desc">运行测试套件(<code class="inline">tests/</code>)</td></tr>
+        <tr><td data-i18n="devs.verify.t3.cmd"><code>python -m build</code></td><td data-i18n="devs.verify.t3.desc">同时产出 sdist + wheel</td></tr>
+      </tbody>
+    </table>
+
+<pre class="code"><span class="tk-com" data-i18n="devs.verify.cap"># 一次性跑完整套验证</span>
+python -m mypy        <span class="tk-kw">&amp;&amp;</span> \
+python -m pytest -q   <span class="tk-kw">&amp;&amp;</span> \
+python -m build</pre>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left">
+      <div class="kicker" data-i18n="devs.author.kicker">3 · Author</div>
+      <h2 data-i18n="devs.author.h2">写你自己的插件</h2>
+      <p data-i18n-html="devs.author.desc">插件就是一对 <code class="inline">inject</code> + <code class="inline">apply</code>。下面是 minimum viable plugin 的完整形态。</p>
+    </div>
+
+<pre class="code"><span class="tk-kw">from</span> python_cordis <span class="tk-kw">import</span> Context, HookRegistry
+<span class="tk-kw">from</span> python_cordis.core.hook <span class="tk-kw">import</span> hookimpl, hookspec
+
+<span class="tk-cls">@hookspec</span>
+<span class="tk-kw">def</span> <span class="tk-fn">on_message</span>(text): ...
+
+<span class="tk-kw">class</span> <span class="tk-cls">Greeter</span>:
+    name   = <span class="tk-str">"greeter"</span>
+    inject = ()                              <span class="tk-com" data-i18n="code.dev.c1"># 不需要任何依赖 → 立即激活</span>
+
+    <span class="tk-kw">def</span> <span class="tk-fn">apply</span>(self, ctx):
+        <span class="tk-cls">@hookimpl</span>
+        <span class="tk-kw">def</span> <span class="tk-fn">on_message</span>(text):
+            <span class="tk-fn">print</span>(<span class="tk-str">f"hi, </span>{text}<span class="tk-str">!"</span>)
+        ctx.<span class="tk-fn">on</span>(hooks, <span class="tk-str">"on_message"</span>, on_message)
+        ctx.<span class="tk-fn">effect</span>(<span class="tk-kw">lambda</span>: <span class="tk-fn">print</span>(<span class="tk-str">"greeter down"</span>))  <span class="tk-com" data-i18n="code.dev.c2"># 可逆拆卸</span></pre>
+
+    <p style="color:var(--text-muted)" data-i18n-html="devs.author.tail">
+      想看更多范例?<a href="concepts.html">核心概念页</a> 讲清了可逆效应 / 反应式余效应 / Context / Fiber / 四种 hook 模式,
+      <a href="quickstart.html">快速开始</a> 有完整可跑通的 5 分钟示例。
+    </p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head" style="text-align:left">
+      <div class="kicker" data-i18n="devs.ship.kicker">4 · Ship</div>
+      <h2 data-i18n="devs.ship.h2">发版与贡献</h2>
+      <p data-i18n-html="devs.ship.desc">本项目遵循 Conventional Commits;版本号手动维护于 <code class="inline">pyproject.toml</code>。</p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="icon">▲</div>
+        <h3 data-i18n="devs.ship.c1.h">TestPyPI 验证</h3>
+        <p data-i18n-html="devs.ship.c1.desc"><code class="inline">python -m build</code> + <code class="inline">twine upload --repository testpypi dist/*</code> 先在测试环境试一遍,避免污染正式索引。</p>
+      </div>
+      <div class="card">
+        <div class="icon">★</div>
+        <h3 data-i18n="devs.ship.c2.h">正式发版</h3>
+        <p data-i18n-html="devs.ship.c2.desc">改 <code class="inline">pyproject.toml</code> 中的 <code class="inline">version</code> + 同步 <code class="inline">__version__</code>,打 tag 推 <code class="inline">twine upload dist/*</code>。</p>
+      </div>
+      <div class="card">
+        <div class="icon">⇄</div>
+        <h3 data-i18n="devs.ship.c3.h">提 PR</h3>
+        <p data-i18n="devs.ship.c3.desc">fork → feature branch → commit → PR。CI 会跑 mypy + pytest,需要保持 strict 模式干净。</p>
+      </div>
+    </div>
+
+    <p style="margin-top:24px; color:var(--text-muted)" data-i18n-html="devs.ship.tail">
+      详细贡献指南见 <a href="https://github.com/peroxider/python-cordis">GitHub repo</a>。
+      License: <code class="inline">MIT</code> · Python ≥ 3.10。
+    </p>
+
+    <div style="text-align:center; margin-top:24px">
+      <a class="btn btn-primary" href="index.html" data-i18n="devs.cta.home">← Home</a>
+      <a class="btn btn-ghost"   href="https://github.com/peroxider/python-cordis" data-i18n="devs.cta.gh">GitHub →</a>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="links">
+      <a href="https://pypi.org/project/python-cordis/">PyPI</a>
+      <a href="https://github.com/peroxider/python-cordis">GitHub</a>
+      <a href="index.html" data-i18n="nav.home"></a>
+    </div>
+    <div data-i18n="foot.tag"></div>
+  </div>
+</footer>
+
+<script src="assets/main.js" defer></script>
+</body>
+</html>

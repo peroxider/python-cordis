@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Quick Start · python-cordis</title>
+  <meta name="description" content="Install python-cordis, write one component, run a Fiber, see hot reload — in five minutes." />
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="assets/i18n.js" defer></script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">c</span>
+      <span>python-cordis</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html"        data-i18n="nav.home"></a>
+      <a href="quickstart.html"   data-i18n="nav.start"></a>
+      <a href="concepts.html"     data-i18n="nav.concepts"></a>
+      <a href="architecture.html" data-i18n="nav.arch"></a>
+      <a href="dev.html"          data-i18n="nav.dev"></a>
+    </div>
+    <div class="nav-actions">
+      <button class="lang-toggle" data-lang-toggle></button>
+      <a class="nav-cta" href="https://github.com/peroxider/python-cordis" data-i18n="nav.cta"></a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" style="padding:64px 0 48px">
+  <div class="wrap">
+    <div class="hero-eyebrow" data-i18n="quick.kicker"></div>
+    <h1 style="font-size:clamp(28px,4vw,44px)" data-i18n="quick.title"></h1>
+    <p class="hero-tag" data-i18n="quick.tag"></p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="steps">
+
+      <div class="step">
+        <h3 data-i18n-html="quick.s1.title">Install <span class="pill">Python ≥ 3.10</span></h3>
+        <p data-i18n-html="quick.s1.desc">核心包只依赖 <code class="inline">pluggy</code> 和 <code class="inline">omegaconf</code>,无原生扩展;可选 <code class="inline">watchdog</code> 提供文件监听。</p>
+<pre class="code"><span class="tk-com"># core</span>
+pip install python-cordis
+
+<span class="tk-com"># with hot module reload (FileWatcher)</span>
+pip install <span class="tk-str">"python-cordis[hmr]"</span>
+
+<span class="tk-com"># for contributors</span>
+pip install <span class="tk-str">"-e python-cordis[dev,hmr]"</span></pre>
+      </div>
+
+      <div class="step">
+        <h3 data-i18n-html="quick.s2.title">Define the seam — 内核与插件唯一的耦合点</h3>
+        <p data-i18n-html="quick.s2.desc">用 <code class="inline">@hookspec</code> 声明扩展点。内核与插件从此只通过 hookspec 对话,内核不知道任何具体插件。</p>
+<pre class="code"><span class="tk-kw">from</span> python_cordis <span class="tk-kw">import</span> HookRegistry
+<span class="tk-kw">from</span> python_cordis.core.hook <span class="tk-kw">import</span> hookspec, hookimpl
+
+<span class="tk-cls">@hookspec</span>
+<span class="tk-kw">def</span> <span class="tk-fn">on_message</span>(text): ...</pre>
+      </div>
+
+      <div class="step">
+        <h3 data-i18n-html="quick.s3.title">Write a plugin — <code class="inline">inject</code> + <code class="inline">apply</code></h3>
+        <p data-i18n-html="quick.s3.desc">插件只需要两个东西:声明依赖的 <code class="inline">inject</code> 元组,和应用副作用的 <code class="inline">apply(ctx, ...)</code> 函数。<code class="inline">ctx.on</code> 注册监听,<code class="inline">ctx.effect</code> 记录拆卸操作 — 都是可逆的。</p>
+<pre class="code"><span class="tk-kw">class</span> <span class="tk-cls">Printer</span>:
+    name   = <span class="tk-str">"printer"</span>
+    inject = (<span class="tk-str">"config"</span>,)             <span class="tk-com" data-i18n="code.qs3.c1"># 反应式余效应:依赖满足才激活</span>
+
+    <span class="tk-kw">def</span> <span class="tk-fn">apply</span>(self, ctx, config):
+        <span class="tk-cls">@hookimpl</span>
+        <span class="tk-kw">def</span> <span class="tk-fn">on_message</span>(text):
+            <span class="tk-fn">print</span>(ctx.config[<span class="tk-str">"prefix"</span>], text)
+        ctx.<span class="tk-fn">on</span>(hooks, <span class="tk-str">"on_message"</span>, on_message)
+        ctx.<span class="tk-fn">effect</span>(<span class="tk-kw">lambda</span>: <span class="tk-fn">print</span>(<span class="tk-str">"printer torn down"</span>))</pre>
+      </div>
+
+      <div class="step">
+        <h3 data-i18n-html="quick.s4.title">Run a Fiber — 依赖满足即激活</h3>
+        <p data-i18n-html="quick.s4.desc">把插件挂在 context 上,<code class="inline">ctx.use</code> 会自动 reconcile:<code class="inline">inject</code> 满足 → 立即激活;不满足 → 静默待命,直到依赖出现。</p>
+<pre class="code">hooks = <span class="tk-cls">HookRegistry</span>()
+hooks.<span class="tk-fn">add_spec</span>(__import__(__name__))
+
+ctx = <span class="tk-cls">Context</span>()
+ctx.<span class="tk-fn">register</span>(<span class="tk-str">"config"</span>, {<span class="tk-str">"prefix"</span>: <span class="tk-str">"&gt;"</span>})
+
+fiber = ctx.<span class="tk-fn">use</span>(<span class="tk-cls">Printer</span>())
+<span class="tk-kw">assert</span> fiber.active              <span class="tk-com" data-i18n="code.qs4.c1"># True: 依赖已满足</span></pre>
+      </div>
+
+      <div class="step">
+        <h3 data-i18n-html="quick.s5.title">Drive it &amp; tear down — 副作用完整撤销</h3>
+        <p data-i18n-html="quick.s5.desc">触发 hook,组件按需响应。停止 fiber 时,所有 <code class="inline">effect</code>/<code class="inline">on</code>/<code class="inline">register</code> 的 disposer 按相反顺序执行,无残留。</p>
+<pre class="code">hooks.<span class="tk-fn">emit</span>(<span class="tk-str">"on_message"</span>, text=<span class="tk-str">"hello, plugins"</span>)
+<span class="tk-com"># &gt; hello, plugins</span>
+
+fiber.<span class="tk-fn">stop</span>()
+<span class="tk-com" data-i18n="code.qs5.c1"># printer torn down   ← 自动调用 ctx.effect 注册的 lambda</span>
+<span class="tk-kw">assert not</span> fiber.active</pre>
+      </div>
+
+      <div class="step">
+        <h3 data-i18n-html="quick.s6.title">Bonus — 反应式余效应实战</h3>
+        <p data-i18n-html="quick.s6.desc">下面这段直接展示"依赖消失 → 组件自动休眠":把 <code class="inline">register</code> 返回的 disposer 调用一下,Fiber 会把 Printer 拆掉;再注册,自动重建。</p>
+<pre class="code">config_disp = ctx.<span class="tk-fn">register</span>(<span class="tk-str">"config"</span>, {<span class="tk-str">"prefix"</span>: <span class="tk-str">"&gt;"</span>})
+
+<span class="tk-fn">print</span>(fiber.active)          <span class="tk-com"># True</span>
+
+<span class="tk-fn">config_disp</span>()              <span class="tk-com" data-i18n="code.qs6.c1"># 撤销服务 → refresh 触发,fiber 自动 stop()</span>
+<span class="tk-fn">print</span>(fiber.active)          <span class="tk-com"># False</span>
+
+ctx.<span class="tk-fn">register</span>(<span class="tk-str">"config"</span>, {<span class="tk-str">"prefix"</span>: <span class="tk-str">"&gt;"</span>})
+<span class="tk-fn">print</span>(fiber.active)          <span class="tk-com" data-i18n="code.qs6.c2"># True — 自动恢复</span></pre>
+      </div>
+
+    </div>
+
+    <div class="output">
+      <span class="label" data-i18n="quick.out.label">Expected output</span>
+      <div class="row"><span class="info">&gt;</span> hello, plugins</div>
+      <div class="row">printer torn down</div>
+      <div class="row"><span class="info">False</span></div>
+      <div class="row"><span class="ok">True</span></div>
+    </div>
+
+    <div style="text-align:center; margin-top:32px">
+      <a class="btn btn-primary" href="concepts.html"     data-i18n="quick.cta.next.c">→ Core Concepts</a>
+      <a class="btn btn-ghost"   href="architecture.html" data-i18n="quick.cta.next.a">→ Architecture</a>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="links">
+      <a href="https://pypi.org/project/python-cordis/">PyPI</a>
+      <a href="https://github.com/peroxider/python-cordis">GitHub</a>
+      <a href="index.html" data-i18n="nav.home"></a>
+    </div>
+    <div data-i18n="foot.tag"></div>
+  </div>
+</footer>
+
+<script src="assets/main.js" defer></script>
+</body>
+</html>

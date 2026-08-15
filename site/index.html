@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>python-cordis · Plugin-driven framework kernel for Python</title>
+  <meta name="description" content="python-cordis: everything is a plugin. Revertible effects, reactive coeffects, transactional hot reload. A zero-opinion meta-framework kernel." />
+  <link rel="stylesheet" href="assets/style.css" />
+  <script src="assets/i18n.js" defer></script>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">c</span>
+      <span>python-cordis</span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html"        data-i18n="nav.home"></a>
+      <a href="quickstart.html"   data-i18n="nav.start"></a>
+      <a href="concepts.html"     data-i18n="nav.concepts"></a>
+      <a href="architecture.html" data-i18n="nav.arch"></a>
+      <a href="dev.html"          data-i18n="nav.dev"></a>
+    </div>
+    <div class="nav-actions">
+      <button class="lang-toggle" data-lang-toggle></button>
+      <a class="nav-cta" href="https://github.com/peroxider/python-cordis" data-i18n="nav.cta"></a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-eyebrow" data-i18n="hero.kicker"></div>
+    <p class="hero-credit" data-i18n-html="hero.credit"></p>
+    <h1 data-i18n="hero.title"></h1>
+    <p class="hero-tag" data-i18n="hero.tag"></p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="quickstart.html"   data-i18n="hero.cta.primary"></a>
+      <a class="btn btn-ghost"   href="architecture.html" data-i18n="hero.cta.ghost"></a>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal-head">
+        <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+        <span data-i18n="hero.term.label"></span>
+      </div>
+      <pre class="terminal-body"><span class="prompt">$</span> pip install python-cordis
+<span class="prompt">$</span> python main.py
+<span class="hi">ctx.use(Printer())</span>           <span class="com" data-i18n="code.hero.c1"># inject=('config',) 已满足</span>
+&gt; hello, plugins                <span class="com" data-i18n="code.hero.c2"># Printer.apply 注册了 hookimpl</span>
+<span class="ok">✓</span> fiber.active = <span class="hi">True</span>
+<span class="ok">✓</span> fiber.stop()  <span data-i18n="code.hero.c3">拆卸逆序执行,副作用完整撤销</span></pre>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker" data-i18n="feat.kicker"></div>
+      <h2 data-i18n="feat.title"></h2>
+      <p data-i18n="feat.tag"></p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="icon">↺</div>
+        <h3 data-i18n="feat.rv.title"></h3>
+        <p  data-i18n="feat.rv.desc"></p>
+        <span class="ref" data-i18n="feat.rv.ref"></span>
+      </div>
+      <div class="card">
+        <div class="icon">⚡</div>
+        <h3 data-i18n="feat.co.title"></h3>
+        <p  data-i18n="feat.co.desc"></p>
+        <span class="ref" data-i18n="feat.co.ref"></span>
+      </div>
+      <div class="card">
+        <div class="icon">⟳</div>
+        <h3 data-i18n="feat.hot.title"></h3>
+        <p  data-i18n="feat.hot.desc"></p>
+        <span class="ref" data-i18n="feat.hot.ref"></span>
+      </div>
+      <div class="card">
+        <div class="icon">∅</div>
+        <h3 data-i18n="feat.meta.title"></h3>
+        <p  data-i18n="feat.meta.desc"></p>
+        <span class="ref" data-i18n="feat.meta.ref"></span>
+      </div>
+      <div class="card">
+        <div class="icon">⤵</div>
+        <h3 data-i18n="feat.hook.title"></h3>
+        <p  data-i18n="feat.hook.desc"></p>
+        <span class="ref" data-i18n="feat.hook.ref"></span>
+      </div>
+      <div class="card">
+        <div class="icon">◎</div>
+        <h3 data-i18n="feat.obs.title"></h3>
+        <p  data-i18n="feat.obs.desc"></p>
+        <span class="ref" data-i18n="feat.obs.ref"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker" data-i18n="why.kicker"></div>
+      <h2 data-i18n="why.title"></h2>
+      <p data-i18n="why.tag"></p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="icon">1</div>
+        <h3 data-i18n-html="why.c1.title"></h3>
+        <p  data-i18n-html="why.c1.desc"></p>
+      </div>
+      <div class="card">
+        <div class="icon">2</div>
+        <h3 data-i18n-html="why.c2.title"></h3>
+        <p  data-i18n-html="why.c2.desc"></p>
+      </div>
+      <div class="card">
+        <div class="icon">3</div>
+        <h3 data-i18n-html="why.c3.title"></h3>
+        <p  data-i18n-html="why.c3.desc"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kicker" data-i18n="comp.kicker"></div>
+      <h2 data-i18n="comp.title"></h2>
+    </div>
+
+    <div class="banner">
+      <div class="banner-icon">a</div>
+      <div class="banner-body">
+        <h3 data-i18n="comp.banner.h"></h3>
+        <p  data-i18n="comp.banner.p"></p>
+      </div>
+      <a class="btn btn-ghost" href="https://pypi.org/project/python-cordis-agent/"
+         data-i18n="comp.banner.a"></a>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="links">
+      <a href="https://pypi.org/project/python-cordis/">PyPI</a>
+      <a href="https://github.com/peroxider/python-cordis">GitHub</a>
+      <a href="https://github.com/peroxider/python-cordis/blob/master/docs/architecture.mmd">Architecture diagram</a>
+      <a href="dev.html">Development</a>
+    </div>
+    <div data-i18n="foot.tag"></div>
+    <div style="margin-top:6px">© python-cordis · <span data-i18n="foot.lic"></span></div>
+  </div>
+</footer>
+
+<script src="assets/main.js" defer></script>
+</body>
+</html>

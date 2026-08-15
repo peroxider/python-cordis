@@ -1,0 +1,63 @@
+# ============================================================
+# Deploy the static promo site to GitHub Pages.
+#
+# Trigger:
+#   - push to main      → deploy
+#   - manual dispatch   → deploy
+#
+# Source of truth:
+#   ./site/             (renamed from the previous ./promo/ folder)
+#
+# Permissions:
+#   The workflow needs `pages: write` + `id-token: write` so that
+#   `actions/deploy-pages@v4` can publish via the GitHub OIDC token.
+# ============================================================
+
+name: Deploy site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+# Allow only one concurrent deploy — older runs are cancelled.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: Build site artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
