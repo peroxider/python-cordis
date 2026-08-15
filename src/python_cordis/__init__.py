@@ -41,7 +41,7 @@ from .observability import (
     setup_lifecycle_logging,
 )
 
-__version__ = "0.1.1"
+__version__ = "0.1.4"
 
 __all__ = [
     "Context",
