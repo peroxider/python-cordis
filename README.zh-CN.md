@@ -2,6 +2,8 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
+**官网 / 文档：** https://peroxider.github.io/python-cordis/
+
 面向 Python 的插件驱动框架内核，灵感来自 cordis 框架：
 **万物皆插件（everything is a plugin）**。
 
@@ -23,6 +25,9 @@
 - [开发](#开发)
 - [相关项目](#相关项目)
 - [许可证](#许可证)
+
+> 更完整的讲解 —— 架构图、钩子模式表、逐步示例 —— 请访问渲染站点：
+> **[peroxider.github.io/python-cordis](https://peroxider.github.io/python-cordis/)**。
 
 ## 功能特性
 

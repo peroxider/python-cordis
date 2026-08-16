@@ -2,6 +2,8 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
+**Website / Docs:** https://peroxider.github.io/python-cordis/
+
 A plugin-driven framework kernel for Python, inspired by the cordis framework:
 **everything is a plugin**.
 
@@ -26,6 +28,10 @@ replaceable plugins on top of this kernel.
 - [Development](#development)
 - [Related projects](#related-projects)
 - [License](#license)
+
+> For a fuller walkthrough with architecture diagrams, hook-mode tables, and
+> step-by-step examples, see the rendered site:
+> **[peroxider.github.io/python-cordis](https://peroxider.github.io/python-cordis/)**.
 
 ## Features
 
